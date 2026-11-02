@@ -41,10 +41,14 @@ Enum `Category` con 5 valori, ognuno con colore e lista ordinata di `Phase`
 Logica deterministica, nessuna IA:
 
 - numero di milestone = giorni tra oggi e scadenza / 30, arrotondato su,
-  minimo 1, massimo 12;
+  **minimo 3** (deciso il 2026-11-02: un progetto non deve mai avere meno di
+  3 fasi, nemmeno con scadenza vicinissima — si comprimono le scadenze dei
+  milestone, non il numero di fasi), massimo 12;
 - le fasi del modello della categoria vengono distribuite uniformemente sui
   milestone generati (se i milestone sono più delle fasi, le fasi si
-  ripetono con suffisso "parte N");
+  ripetono con suffisso "parte N"; se sono meno, va garantito comunque che
+  compaiano almeno la prima, una centrale e l'ultima fase — non solo prima
+  e ultima come nell'implementazione attuale, da correggere);
 - le scadenze dei milestone sono equidistanti tra data creazione e scadenza
   finale, l'ultima coincide sempre con la scadenza del progetto;
 - ogni milestone eredita i task di default della sua fase.

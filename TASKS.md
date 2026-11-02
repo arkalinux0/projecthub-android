@@ -85,17 +85,25 @@ La route `stats` non c'è ancora: arriva con la schermata in P2.
   progetti.** Nella Home, senza progetti la card dell'avanzamento
   totale non riempie la larghezza dello schermo.
 
-## Decisioni in sospeso
-
-- [ ] **Progetti con scadenza entro 30 giorni ottengono una sola
-  milestone**, che prende sempre l'ultima fase del modello della
-  categoria (es. un progetto software breve riceve solo "Rilascio",
-  saltando Analisi/Nucleo/Funzionalità/Qualità). La spec non definisce
-  questo caso. Decisione richiesta ad Arka: tenere così (un progetto
-  breve = uno sprint finale), garantire sempre un minimo di fasi (es. 3)
-  comprimendo le scadenze, o scalare comunque tutte le fasi del modello
-  anche su pochi giorni. Non implementare nessuna delle alternative
-  finché Arka non si esprime.
+- [ ] 🟠 **Planner: garantire sempre almeno 3 fasi.** Decisione presa da
+  Arka il 2026-11-02 (vedi `PROJECTHUB_SPEC.md`, sezione Planner):
+  nessun progetto deve avere meno di 3 milestone, nemmeno con scadenza
+  vicinissima — si comprimono le scadenze dei milestone, non il numero
+  di fasi. Oggi `Planner.milestoneCount()` ha minimo 1 e per scadenze
+  entro 120 giorni alcune fasi intermedie vengono saltate (con 2
+  milestone resta solo prima e ultima fase, vedi
+  `fewerMilestonesThanPhases_keepsFirstAndLastPhase` in
+  `app/src/test/.../domain/PlannerTest.kt` sul branch `claude/p1-test-e-fix-ui`,
+  non ancora in `main`). Da fare, **dopo** che quella PR è stata
+  verificata e unita (i suoi test codificano il comportamento vecchio,
+  non toccarli prima):
+  1. cambiare il minimo in `milestoneCount()` da 1 a 3;
+  2. in `plan()`, quando i milestone sono meno delle fasi, garantire che
+     compaiano sempre prima, una fase centrale e ultima (non solo prima
+     e ultima come ora);
+  3. aggiornare `singleMilestone_usesLastPhaseOfCategory` e
+     `fewerMilestonesThanPhases_keepsFirstAndLastPhase` nei test per il
+     nuovo comportamento, invece di cancellarli.
 
 ## P2 — completare la v1 come da spec
 
@@ -125,6 +133,14 @@ La route `stats` non c'è ancora: arriva con la schermata in P2.
     una classe `Application` dedicata (valutare se serve una
     `ProjectHubApplication : Application`, al momento manca e non è
     dichiarata nel manifest).
+
+## Fatto fuori backlog
+
+- [x] ✅ **CI** (decisione di Arka, 2026-11-02): aggiunto
+  `.github/workflows/android-ci.yml` — compila, testa e lint-a il
+  progetto su ogni push/PR verso `main` con un runner GitHub (rete e SDK
+  completi, a differenza di tutti gli ambienti usati finora). Non ancora
+  vista girare su una PR vera: verificarlo sulla prossima PR aperta.
 
 ## P3 — backlog, non bloccante per la v1
 
