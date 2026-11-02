@@ -43,6 +43,14 @@ Gradle 8.9 richiede JDK 21 (`JAVA_HOME=/usr/lib/jvm/java-21-openjdk`), con JDK 2
 non parte. Flusso crea/spunta/riavvia/elimina provato su emulatore API 36.1.
 La route `stats` non c'è ancora: arriva con la schermata in P2.
 
+Nota ambiente (2026-11-02): nelle sessioni cloud di Claude Code
+`dl.google.com` deve essere tra i domini consentiti della rete
+dell'ambiente: Google Maven e Android SDK stanno lì, senza AGP non si
+risolve e nessun `./gradlew` funziona. Maven Central risponde a tratti 429,
+ma con qualche riprova si scarica. Nel container di quella sessione non
+c'era `/dev/kvm`, quindi niente emulatore: le verifiche a schermo restano da
+fare in locale.
+
 ## P1 — bug da correggere nel codice esistente
 
 - [x] ✅ ~~Incoerenza di timezone sulle date~~ — **falso allarme, verificato
@@ -67,6 +75,21 @@ La route `stats` non c'è ancora: arriva con la schermata in P2.
     `NaN` o dividere per zero — oggi è già gestito, va solo testato);
   - `MainViewModel`/`Repository.createProject` con un test strumentale
     o Robolectric se si vuole coprire anche Room.
+
+  Note (2026-11-02): scritti `PlannerTest.kt` (13 test) e `ModelsTest.kt`
+  (12 test) in `app/src/test/java/ch/arka/projecthub/domain/`, JUnit 4, per
+  i primi due punti: tutti i casi elencati sopra per `Planner.plan()`, più
+  invarianti su ogni categoria e su ogni numero di milestone da 1 a 12
+  (ultima scadenza = scadenza del progetto, scadenze crescenti, task
+  ereditati dalla fase, fasi in ordine, "parte N" solo sulle fasi ripetute);
+  `ratio()`, `MilestoneUi`/`ProjectUi` e `overallProgress` con 0 task e con
+  pesatura per task. Verificato: 25/25 verdi con Kotlin 2.0.21 + JUnit
+  4.13.2 (target JVM 17) in un harness JVM fuori dal repo che compila i
+  sorgenti reali di `domain/` e `data/Entities.kt` (annotazioni Room
+  sostituite da stub solo nell'harness); 4 mutazioni di `Planner`/`ratio()`
+  vengono tutte rilevate. **Non ancora eseguiti con `./gradlew test`**
+  (vedi nota ambiente in P0): farlo su una macchina con Android SDK prima di
+  spuntare. Terzo punto (Room/Robolectric) non fatto.
 
 - [ ] 🟠 **Fix status bar non confermato.** `enableEdgeToEdge()` in
   `MainActivity` seguiva il tema chiaro di sistema, rendendo le icone
@@ -96,6 +119,14 @@ La route `stats` non c'è ancora: arriva con la schermata in P2.
   comprimendo le scadenze, o scalare comunque tutte le fasi del modello
   anche su pochi giorni. Non implementare nessuna delle alternative
   finché Arka non si esprime.
+
+  Nota emersa dai test (2026-11-02): lo stesso effetto c'è, in forma più
+  lieve, fino a 120 giorni. Con 2–4 milestone alcune fasi intermedie
+  vengono saltate (2 milestone = fasi 1 e 5; 3 = fasi 1, 3, 5; 4 = fasi
+  1, 2, 4, 5); tutte e 5 le fasi compaiono solo da 121 giorni in su. Il
+  comportamento attuale è fissato da `singleMilestone_usesLastPhaseOfCategory`
+  e `fewerMilestonesThanPhases_keepsFirstAndLastPhase` in `PlannerTest`:
+  vanno aggiornati insieme al Planner quando Arka decide.
 
 ## P2 — completare la v1 come da spec
 
