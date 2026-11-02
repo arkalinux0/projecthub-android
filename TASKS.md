@@ -45,18 +45,17 @@ La route `stats` non c'è ancora: arriva con la schermata in P2.
 
 ## P1 — bug da correggere nel codice esistente
 
-- [ ] 🟠 **Incoerenza di timezone sulle date.** `AddProjectScreen.kt`
-  converte la data scelta nel `DatePicker` usando `ZoneOffset.UTC`,
-  mentre `Planner`/`Repository`/`ProjectUi` usano `LocalDate.now()` (zona
-  del dispositivo, per Arka `Europe/Zurich`, UTC+1). Vicino alla
-  mezzanotte questo può far scegliere o calcolare il giorno sbagliato.
-  Scegliere **una sola convenzione** (consigliato: sempre zona di
-  sistema, `ZoneId.systemDefault()`) e usarla ovunque si converte tra
-  `LocalDate` ed epoch millis/days.
-  **Da rivalutare prima di correggere:** il `DatePicker` di Material 3
-  lavora in millisecondi UTC, quindi `ZoneOffset.UTC` in
-  `AddProjectScreen.kt` è probabilmente corretto così e passare a
-  `ZoneId.systemDefault()` lì introdurrebbe il bug nelle zone a UTC negativo.
+- [x] ✅ ~~Incoerenza di timezone sulle date~~ — **falso allarme, verificato
+  e chiuso (2026-11-02).** Il dubbio era che `AddProjectScreen.kt` usi
+  `ZoneOffset.UTC` mentre il resto del codice usa la zona di sistema.
+  Documentazione ufficiale di `DatePickerState.selectedDateMillis`:
+  "A timestamp that represents the selected date start of the day in
+  UTC milliseconds from the epoch" — il contratto dell'API è *sempre*
+  UTC indipendentemente dal fuso del dispositivo, quindi convertire con
+  `ZoneOffset.UTC` in `AddProjectScreen.kt` è l'unico modo corretto di
+  decodificare la data scelta. Passare a `ZoneId.systemDefault()` lì
+  avrebbe introdotto un bug reale nelle zone diverse da UTC+0. Non
+  toccare questo codice.
 
 - [ ] 🟠 **Nessun test.** La cartella `app/src/test` esiste ma è vuota.
   Coprire almeno:
@@ -68,6 +67,35 @@ La route `stats` non c'è ancora: arriva con la schermata in P2.
     `NaN` o dividere per zero — oggi è già gestito, va solo testato);
   - `MainViewModel`/`Repository.createProject` con un test strumentale
     o Robolectric se si vuole coprire anche Room.
+
+- [ ] 🟠 **Fix status bar non confermato.** `enableEdgeToEdge()` in
+  `MainActivity` seguiva il tema chiaro di sistema, rendendo le icone
+  della status bar scure su sfondo scuro; è stato applicato un fix ma
+  lo screenshot dopo la modifica non mostra affatto la status bar, quindi
+  non è verificato se ora è leggibile. Ricontrollare con uno screenshot
+  che la includa, su emulatore o telefono reale.
+
+- [ ] 🟠 **Possibile bottone "Crea progetto" coperto dalla tastiera.**
+  Quando l'anteprima del piano generato è visibile in `AddProjectScreen`,
+  la tastiera aperta può coprire il bottone finale. Non verificato se il
+  form scorre per raggiungerlo con la tastiera aperta; se non scorre,
+  va reso scrollabile fino in fondo o il bottone va reso sempre visibile.
+
+- [ ] ⚪ **Cosmetico: card del progresso totale troppo stretta a 0
+  progetti.** Nella Home, senza progetti la card dell'avanzamento
+  totale non riempie la larghezza dello schermo.
+
+## Decisioni in sospeso
+
+- [ ] **Progetti con scadenza entro 30 giorni ottengono una sola
+  milestone**, che prende sempre l'ultima fase del modello della
+  categoria (es. un progetto software breve riceve solo "Rilascio",
+  saltando Analisi/Nucleo/Funzionalità/Qualità). La spec non definisce
+  questo caso. Decisione richiesta ad Arka: tenere così (un progetto
+  breve = uno sprint finale), garantire sempre un minimo di fasi (es. 3)
+  comprimendo le scadenze, o scalare comunque tutte le fasi del modello
+  anche su pochi giorni. Non implementare nessuna delle alternative
+  finché Arka non si esprime.
 
 ## P2 — completare la v1 come da spec
 
