@@ -142,6 +142,14 @@ La route `stats` non c'è ancora: arriva con la schermata in P2.
   completi, a differenza di tutti gli ambienti usati finora). Non ancora
   vista girare su una PR vera: verificarlo sulla prossima PR aperta.
 
+  Nota (2026-11-02): le prime esecuzioni (push su `main` e PR di
+  `claude/p1-test-e-fix-ui`) sono fallite al passo "Imposta Android SDK",
+  prima di qualsiasi build: il default di `android-actions/setup-android@v3`
+  è `packages: tools platform-tools` e il pacchetto `tools` non esiste più
+  nel repository dell'SDK, quindi `sdkmanager tools` esce con errore.
+  Corretto indicando `packages: platform-tools`; piattaforma e build-tools
+  restano installati dal passo successivo, come prima.
+
 ## P3 — backlog, non bloccante per la v1
 
 - [ ] ⚪ Modifica manuale di singole fasi/task dopo la creazione
