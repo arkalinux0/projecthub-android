@@ -26,6 +26,11 @@ jobs:
 
       - name: Imposta Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # Il default dell'action è "tools platform-tools", ma il pacchetto
+          # "tools" non esiste più nel repository dell'SDK: `sdkmanager tools`
+          # esce con errore e fa fallire il job prima di qualsiasi build.
+          packages: platform-tools
 
       - name: Installa piattaforma e build-tools richiesti
         run: |
