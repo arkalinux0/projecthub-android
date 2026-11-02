@@ -9,13 +9,13 @@ dalla v1 ma previsto in spec · ⚪ backlog futuro, non bloccante.
 
 ## P0 — far compilare e partire l'app
 
-- [ ] 🔴 **Wrapper Gradle incompleto.** Esiste solo
+- [x] 🔴 **Wrapper Gradle incompleto.** Esiste solo
   `gradle/wrapper/gradle-wrapper.properties`; mancano `gradlew`,
   `gradlew.bat` e `gradle-wrapper.jar`. Rigenerarli (`gradle wrapper
   --gradle-version 8.9`) o scaricare quelli standard per Gradle 8.9.
   Senza questo nessun comando `./gradlew` funziona.
 
-- [ ] 🔴 **`MainActivity.kt` non esiste.** Deve creare il `NavHost` con le
+- [x] 🔴 **`MainActivity.kt` non esiste.** Deve creare il `NavHost` con le
   route `home`, `project/{id}` (arg `Long`), `add`, e la nuova `stats`
   (vedi P2). Collegare `HomeScreen`, `ProjectScreen`, `AddProjectScreen`
   già scritte in `ui/`. Nota: in una sessione precedente la scrittura di
@@ -26,7 +26,7 @@ dalla v1 ma previsto in spec · ⚪ backlog futuro, non bloccante.
   Da Claude Code (CLI) non dovrebbe ripresentarsi, ma se succede di
   nuovo, scrivere il file in pezzi più piccoli.
 
-- [ ] 🔴 **Mai compilato.** Non è mai stato verificato con un vero
+- [x] 🔴 **Mai compilato.** Non è mai stato verificato con un vero
   Android SDK. Dopo aver sistemato il wrapper, eseguire
   `./gradlew assembleDebug` e risolvere ogni errore. In particolare da
   controllare:
@@ -36,6 +36,12 @@ dalla v1 ma previsto in spec · ⚪ backlog futuro, non bloccante.
   - `FlowRow` in `AddProjectScreen.kt` è annotato `@OptIn(ExperimentalLayoutApi::class)`
     ma in Compose Foundation recenti `FlowRow` è stabile: se il compilatore
     segnala l'opt-in come inutile, rimuoverlo.
+
+Note P0 (2026-11-02): `assembleDebug` e `lint` passano (0 errori) con le versioni
+esistenti, nessuna modifica necessaria; l'opt-in di `FlowRow` non genera avvisi.
+Gradle 8.9 richiede JDK 21 (`JAVA_HOME=/usr/lib/jvm/java-21-openjdk`), con JDK 27
+non parte. Flusso crea/spunta/riavvia/elimina provato su emulatore API 36.1.
+La route `stats` non c'è ancora: arriva con la schermata in P2.
 
 ## P1 — bug da correggere nel codice esistente
 
@@ -47,6 +53,10 @@ dalla v1 ma previsto in spec · ⚪ backlog futuro, non bloccante.
   Scegliere **una sola convenzione** (consigliato: sempre zona di
   sistema, `ZoneId.systemDefault()`) e usarla ovunque si converte tra
   `LocalDate` ed epoch millis/days.
+  **Da rivalutare prima di correggere:** il `DatePicker` di Material 3
+  lavora in millisecondi UTC, quindi `ZoneOffset.UTC` in
+  `AddProjectScreen.kt` è probabilmente corretto così e passare a
+  `ZoneId.systemDefault()` lì introdurrebbe il bug nelle zone a UTC negativo.
 
 - [ ] 🟠 **Nessun test.** La cartella `app/src/test` esiste ma è vuota.
   Coprire almeno:
