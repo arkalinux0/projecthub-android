@@ -104,6 +104,19 @@ fare in locale.
   form scorre per raggiungerlo con la tastiera aperta; se non scorre,
   va reso scrollabile fino in fondo o il bottone va reso sempre visibile.
 
+  Note (2026-11-02): causa trovata leggendo il codice — il bug è reale.
+  Con `enableEdgeToEdge()` la tastiera non ridimensiona più la finestra e
+  il manifest non dichiarava `adjustResize`: la `Column` scorrevole si
+  estendeva sotto la tastiera, quindi lo scroll si fermava con il bottone
+  ancora coperto. Fix applicato (scelta: form scorrevole fino in fondo,
+  niente barra fissa): `android:windowSoftInputMode="adjustResize"`
+  sull'activity + `.consumeWindowInsets(inner).imePadding()` sulla
+  `Column` di `AddProjectScreen`. **Non compilato né provato**: la sessione
+  cloud non aveva Android SDK (vedi nota ambiente in P0). Prima di spuntare:
+  `assembleDebug`, poi su emulatore aprire la tastiera con l'anteprima del
+  piano visibile e verificare che si arrivi a "Crea progetto" scorrendo,
+  senza spazio vuoto doppio sopra la tastiera.
+
 - [ ] ⚪ **Cosmetico: card del progresso totale troppo stretta a 0
   progetti.** Nella Home, senza progetti la card dell'avanzamento
   totale non riempie la larghezza dello schermo.
