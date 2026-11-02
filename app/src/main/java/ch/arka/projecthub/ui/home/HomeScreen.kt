@@ -106,6 +106,8 @@ private fun OverallCard(projects: List<ProjectUi>) {
     val total = projects.sumOf { it.totalTasks }
     val finished = projects.count { it.isComplete }
     Card(
+        // senza fillMaxWidth la card si adatta al testo e a 0 progetti resta stretta
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Surface1),
         shape = RoundedCornerShape(20.dp),
     ) {
