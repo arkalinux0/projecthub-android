@@ -121,6 +121,12 @@ fare in locale.
   progetti.** Nella Home, senza progetti la card dell'avanzamento
   totale non riempie la larghezza dello schermo.
 
+  Note (2026-11-02): la `Card` di `OverallCard` non aveva `fillMaxWidth()`
+  e si adattava al testo (che a 0 progetti è il più corto). Aggiunto
+  `Modifier.fillMaxWidth()`, come già in `ProjectCard`. **Non compilato né
+  verificato a schermo** (sessione cloud senza Android SDK): controllare
+  la Home vuota su emulatore prima di spuntare.
+
 ## Decisioni in sospeso
 
 - [ ] **Progetti con scadenza entro 30 giorni ottengono una sola
