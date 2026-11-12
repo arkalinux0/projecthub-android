@@ -130,7 +130,7 @@ limiti: lì `./gradlew test`, `lint` e `assembleDebug` girano davvero.
   `lint` nella CI su GitHub; **non ancora verificato a schermo**: controllare
   la Home vuota su emulatore prima di spuntare.
 
-- [ ] 🟠 **Planner: garantire sempre almeno 3 fasi.** Decisione presa da
+- [x] 🟠 **Planner: garantire sempre almeno 3 fasi.** Decisione presa da
   Arka il 2026-11-02 (vedi `PROJECTHUB_SPEC.md`, sezione Planner):
   nessun progetto deve avere meno di 3 milestone, nemmeno con scadenza
   vicinissima — si comprimono le scadenze dei milestone, non il numero
@@ -149,6 +149,23 @@ limiti: lì `./gradlew test`, `lint` e `assembleDebug` girano davvero.
   3. aggiornare `singleMilestone_usesLastPhaseOfCategory` e
      `fewerMilestonesThanPhases_keepsFirstAndLastPhase` nei test per il
      nuovo comportamento, invece di cancellarli.
+
+  Note (2026-11-12): fatto. `Planner.MIN_MILESTONES = 3`; con almeno 3
+  milestone la distribuzione esistente dà già prima fase, fase intermedia
+  e ultima (3 milestone = fasi 1, 3, 5; 4 = fasi 1, 2, 4, 5), quindi in
+  `plan()` è sparito solo il caso speciale del milestone unico. Lettura di
+  "una fase centrale" adottata: almeno una fase intermedia — con 4
+  milestone la fase 3 resta saltata come prima; se deve comparire sempre
+  proprio quella, va cambiata la distribuzione. Scadenze compresse: sotto i
+  3 giorni più milestone cadono nello stesso giorno (scadenza oggi = tutti
+  e tre oggi; a 1 giorno = oggi, oggi, domani), da 3 giorni in su sono
+  tutte distinte. I due test sono stati aggiornati e rinominati in
+  `shortDeadline_usesFirstMiddleAndLastPhaseOfCategory` e
+  `fewerMilestonesThanPhases_keepsFirstMiddleAndLastPhase`, più i casi a
+  0/1/2/3/29/30 giorni e gli invarianti (mai meno di 3 milestone, sempre
+  prima/intermedia/ultima). 26/26 verdi nell'harness JVM; riportando il
+  minimo a 1 o 2 ne falliscono 9. I progetti già creati non cambiano: il
+  piano viene calcolato solo alla creazione.
 
 ## P2 — completare la v1 come da spec
 

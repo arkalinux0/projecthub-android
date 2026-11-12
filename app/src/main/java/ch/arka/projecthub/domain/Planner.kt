@@ -14,18 +14,22 @@ data class PlannedMilestone(
  * Scompone un progetto in milestone usando il modello della categoria.
  *
  * Regole (deterministiche, nessuna AI):
- *  - un milestone ogni ~30 giorni tra inizio e scadenza, minimo 1, massimo 12;
- *  - le fasi del modello vengono distribuite in modo uniforme lungo i milestone;
+ *  - un milestone ogni ~30 giorni tra inizio e scadenza, minimo 3, massimo 12:
+ *    con scadenze vicine si comprimono le date dei milestone (anche più di uno
+ *    nello stesso giorno), non il numero di fasi;
+ *  - le fasi del modello vengono distribuite in modo uniforme lungo i milestone:
+ *    compaiono sempre la prima, almeno una fase intermedia e l'ultima;
  *  - se i milestone sono più delle fasi, le fasi ripetute prendono il suffisso "parte N";
  *  - le scadenze dei milestone sono equidistanti, l'ultima coincide con la scadenza finale.
  */
 object Planner {
+    const val MIN_MILESTONES = 3
     const val MAX_MILESTONES = 12
     private const val DAYS_PER_MILESTONE = 30
 
     fun milestoneCount(start: LocalDate, deadline: LocalDate): Int {
         val days = ChronoUnit.DAYS.between(start, deadline).coerceAtLeast(1)
-        return ((days + DAYS_PER_MILESTONE - 1) / DAYS_PER_MILESTONE).toInt().coerceIn(1, MAX_MILESTONES)
+        return ((days + DAYS_PER_MILESTONE - 1) / DAYS_PER_MILESTONE).toInt().coerceIn(MIN_MILESTONES, MAX_MILESTONES)
     }
 
     fun plan(category: Category, start: LocalDate, deadline: LocalDate): List<PlannedMilestone> {
@@ -34,9 +38,10 @@ object Planner {
         val days = ChronoUnit.DAYS.between(start, deadline).coerceAtLeast(1)
         val phases = category.phases
 
+        // n >= MIN_MILESTONES = 3: il primo milestone prende sempre la prima fase,
+        // l'ultimo l'ultima, e quelli in mezzo fasi intermedie.
         val phaseIndex = (0 until n).map { i ->
-            if (n == 1) phases.lastIndex
-            else (i * phases.lastIndex.toDouble() / (n - 1)).roundToInt()
+            (i * phases.lastIndex.toDouble() / (n - 1)).roundToInt()
         }
         val seen = mutableMapOf<Int, Int>()
 

@@ -46,11 +46,12 @@ Logica deterministica, nessuna IA:
   milestone, non il numero di fasi), massimo 12;
 - le fasi del modello della categoria vengono distribuite uniformemente sui
   milestone generati (se i milestone sono più delle fasi, le fasi si
-  ripetono con suffisso "parte N"; se sono meno, va garantito comunque che
-  compaiano almeno la prima, una centrale e l'ultima fase — non solo prima
-  e ultima come nell'implementazione attuale, da correggere);
+  ripetono con suffisso "parte N"; se sono meno, compaiono comunque
+  almeno la prima, una intermedia e l'ultima fase: 3 milestone = fasi 1, 3,
+  5; 4 milestone = fasi 1, 2, 4, 5);
 - le scadenze dei milestone sono equidistanti tra data creazione e scadenza
-  finale, l'ultima coincide sempre con la scadenza del progetto;
+  finale, l'ultima coincide sempre con la scadenza del progetto; con meno
+  di 3 giorni a disposizione più milestone cadono nello stesso giorno;
 - ogni milestone eredita i task di default della sua fase.
 
 ## Calcolo progresso
