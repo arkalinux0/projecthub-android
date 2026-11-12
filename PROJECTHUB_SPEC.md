@@ -99,10 +99,16 @@ Logica deterministica, nessuna IA:
 
 ## Notifiche
 
-- WorkManager con controllo giornaliero: se un milestone scade entro N
-  giorni (es. 3) ed ha task non completati, notifica locale.
-- Se un milestone è scaduto e non completo, notifica di allerta separata.
-- Nessun permesso oltre a `POST_NOTIFICATIONS` (Android 13+).
+- WorkManager con controllo giornaliero (alle 9:00): se un milestone scade
+  entro 3 giorni ed ha task non completati, notifica locale.
+- Se un milestone è scaduto e non completo, notifica di allerta separata,
+  su un canale a importanza alta; torna ogni giorno finché resta scaduto.
+- Una notifica per tipo con l'elenco delle fasi, non una per fase.
+- Nessun permesso oltre a `POST_NOTIFICATIONS` (Android 13+), chiesto a
+  runtime quando esiste almeno un progetto. **Da decidere:** WorkManager
+  aggiunge di suo `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`,
+  `FOREGROUND_SERVICE` e `ACCESS_NETWORK_STATE` (non `INTERNET`), vedi
+  "Decisioni in sospeso" in `TASKS.md`.
 
 ## Fuori scope per v1
 

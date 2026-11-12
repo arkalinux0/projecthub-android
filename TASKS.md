@@ -167,6 +167,29 @@ limiti: lì `./gradlew test`, `lint` e `assembleDebug` girano davvero.
   minimo a 1 o 2 ne falliscono 9. I progetti già creati non cambiano: il
   piano viene calcolato solo alla creazione.
 
+## Decisioni in sospeso
+
+- [ ] **Permessi aggiunti da WorkManager.** La spec dice "nessun permesso
+  oltre a `POST_NOTIFICATIONS`", ma la libreria scelta dalla stessa spec
+  per i promemoria porta nel manifest finale altri quattro permessi
+  normali (concessi all'installazione, senza richiesta all'utente):
+  `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` e
+  `ACCESS_NETWORK_STATE`. Verificato con `aapt2 dump permissions`
+  sull'APK: `INTERNET` **non** c'è, quindi l'app continua a non poter
+  aprire connessioni; `ACCESS_NETWORK_STATE` permette solo di sapere se
+  c'è rete. Per ora sono rimasti tutti, perché è la configurazione
+  supportata della libreria. Decisione richiesta ad Arka:
+  1. tenerli così e correggere la frase della spec;
+  2. togliere dal manifest quelli che l'app non usa
+     (`ACCESS_NETWORK_STATE`, `FOREGROUND_SERVICE`) con
+     `tools:node="remove"`: dovrebbe funzionare perché il worker non ha
+     vincoli di rete né lavori in primo piano, ma è una configurazione
+     non documentata da provare bene (`RECEIVE_BOOT_COMPLETED` e
+     `WAKE_LOCK` servono davvero: senza il primo il controllo non riparte
+     dopo un riavvio);
+  3. sostituire WorkManager con `AlarmManager`, che richiede solo
+     `RECEIVE_BOOT_COMPLETED` ma va gestito a mano.
+
 ## P2 — completare la v1 come da spec
 
 - [x] 🟡 **Streak e statistiche** (previsti in spec, non ancora in
@@ -215,7 +238,7 @@ limiti: lì `./gradlew test`, `lint` e `assembleDebug` girano davvero.
   schermo: serie di più giorni e passaggio di mezzanotte (coperti solo dai
   test di `StatsTest`).
 
-- [ ] 🟡 **Notifiche di scadenza** (previste in spec). Da aggiungere:
+- [x] 🟡 **Notifiche di scadenza** (previste in spec). Da aggiungere:
   - dipendenza `androidx.work:work-runtime-ktx` in `app/build.gradle.kts`;
   - permesso `POST_NOTIFICATIONS` nel manifest (richiesto a runtime su
     Android 13+, con la relativa richiesta nella UI);
@@ -227,6 +250,44 @@ limiti: lì `./gradlew test`, `lint` e `assembleDebug` girano davvero.
     una classe `Application` dedicata (valutare se serve una
     `ProjectHubApplication : Application`, al momento manca e non è
     dichiarata nel manifest).
+
+  Note (2026-11-12): fatto, con una decisione rimasta aperta sui permessi
+  (vedi "Decisioni in sospeso"). Scelte tecniche:
+  - `androidx.work:work-runtime-ktx:2.9.1`; `ProjectHubApplication`
+    (dichiarata nel manifest) crea i canali e pianifica il controllo:
+    serve una `Application` perché il worker deve trovarli anche quando è
+    il sistema ad avviare il processo, senza activity.
+  - `notify/DeadlineWorker`: una volta al giorno, la prima alle prossime
+    9:00, `ExistingPeriodicWorkPolicy.KEEP` (riaprire l'app non sposta
+    l'orario), nessun vincolo di rete. Legge i progetti da Room e chiama
+    `domain/Deadlines.kt`.
+  - `deadlineAlerts()`: segnala solo le fasi con almeno un task non fatto;
+    "in scadenza" = da oggi a 3 giorni (`DUE_SOON_DAYS`), "scaduta" = data
+    passata. Una fase senza task non genera avvisi.
+  - `notify/DeadlineNotifications`: due notifiche, non una per fase —
+    "N fasi in scadenza" (canale `deadline_soon`, importanza normale) e
+    "N fasi scadute" (canale `deadline_overdue`, importanza alta), ognuna
+    con l'elenco "Progetto · Fase: scade tra 2 giorni". Si aggiornano a ogni
+    controllo e spariscono quando non c'è più nulla da segnalare; finché
+    una fase resta scaduta l'avviso torna ogni giorno. Toccarle apre l'app.
+  - `POST_NOTIFICATIONS` nel manifest; la richiesta a runtime (Android 13+)
+    parte da `MainActivity` quando esiste almeno un progetto, una volta per
+    avvio. Senza permesso il worker gira lo stesso ma non mostra nulla.
+
+  Verificato: `./gradlew test` (53 test, 10 nuovi in `DeadlinesTest`),
+  `lint` (0 errori; unico avviso nuovo: esiste una versione più recente di
+  work-runtime) e `assembleDebug` in locale. Su emulatore API 34: al primo
+  avvio con un progetto compare la richiesta di sistema "Allow ProjectHub
+  to send you notifications?"; dopo "Allow" risultano il permesso concesso,
+  i due canali (importanza 3 e 4) e il job di WorkManager pianificato.
+  Portata la data dell'emulatore al 10 dicembre e forzato il job
+  (`cmd jobscheduler run -f ch.arka.projecthub 0`): worker `SUCCESS` e in
+  tendina "1 fase scaduta — Prova · Funzionalità: scaduta da 8 giorni" e
+  "1 fase in scadenza — Prova · Rilascio: scade tra 2 giorni"; la fase
+  Analisi, completata, non compare. **Non verificato**: l'esecuzione
+  spontanea alle 9:00 senza forzare il job, la ripianificazione dopo un
+  riavvio del telefono, il tocco sulla notifica, il comportamento con
+  permesso negato e su un telefono reale con risparmio energetico.
 
 ## Fatto fuori backlog
 
