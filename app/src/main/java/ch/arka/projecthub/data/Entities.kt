@@ -54,4 +54,6 @@ data class TaskEntity(
     val projectId: Long,
     val title: String,
     val done: Boolean = false,
+    /** Giorno (epochDay) in cui il task è stato spuntato; null se non è fatto. */
+    val completedAtDay: Long? = null,
 )

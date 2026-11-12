@@ -59,7 +59,9 @@ class Repository(private val db: AppDatabase) {
         projectId
     }
 
-    suspend fun setTaskDone(taskId: Long, done: Boolean) = dao.setTaskDone(taskId, done)
+    /** Spuntando un task si registra il giorno; togliendo la spunta la data si azzera. */
+    suspend fun setTaskDone(taskId: Long, done: Boolean, today: LocalDate = LocalDate.now()) =
+        dao.setTaskDone(taskId, done, if (done) today.toEpochDay() else null)
 
     suspend fun deleteProject(id: Long) = dao.deleteProject(id)
 }
