@@ -43,6 +43,15 @@ Gradle 8.9 richiede JDK 21 (`JAVA_HOME=/usr/lib/jvm/java-21-openjdk`), con JDK 2
 non parte. Flusso crea/spunta/riavvia/elimina provato su emulatore API 36.1.
 La route `stats` non c'è ancora: arriva con la schermata in P2.
 
+Nota ambiente (2026-11-02): nelle sessioni cloud di Claude Code
+`dl.google.com` deve essere tra i domini consentiti della rete
+dell'ambiente: Google Maven e Android SDK stanno lì, senza AGP non si
+risolve e nessun `./gradlew` funziona. Maven Central risponde a tratti 429,
+ma con qualche riprova si scarica. Nel container di quella sessione non
+c'era `/dev/kvm`, quindi niente emulatore: le verifiche a schermo restano da
+fare in locale. La CI su GitHub (vedi "Fatto fuori backlog") non ha questi
+limiti: lì `./gradlew test`, `lint` e `assembleDebug` girano davvero.
+
 ## P1 — bug da correggere nel codice esistente
 
 - [x] ✅ ~~Incoerenza di timezone sulle date~~ — **falso allarme, verificato
@@ -57,7 +66,7 @@ La route `stats` non c'è ancora: arriva con la schermata in P2.
   avrebbe introdotto un bug reale nelle zone diverse da UTC+0. Non
   toccare questo codice.
 
-- [ ] 🟠 **Nessun test.** La cartella `app/src/test` esiste ma è vuota.
+- [x] 🟠 **Nessun test.** La cartella `app/src/test` esiste ma è vuota.
   Coprire almeno:
   - `Planner.plan()`: casi con scadenza oggi, scadenza a 1 giorno, a 29
     giorni, a 30 giorni esatti, a più di 12 mesi (deve limitarsi a 12
@@ -67,6 +76,22 @@ La route `stats` non c'è ancora: arriva con la schermata in P2.
     `NaN` o dividere per zero — oggi è già gestito, va solo testato);
   - `MainViewModel`/`Repository.createProject` con un test strumentale
     o Robolectric se si vuole coprire anche Room.
+
+  Note (2026-11-02): scritti `PlannerTest.kt` (13 test) e `ModelsTest.kt`
+  (12 test) in `app/src/test/java/ch/arka/projecthub/domain/`, JUnit 4, per
+  i primi due punti: tutti i casi elencati sopra per `Planner.plan()`, più
+  invarianti su ogni categoria e su ogni numero di milestone da 1 a 12
+  (ultima scadenza = scadenza del progetto, scadenze crescenti, task
+  ereditati dalla fase, fasi in ordine, "parte N" solo sulle fasi ripetute);
+  `ratio()`, `MilestoneUi`/`ProjectUi` e `overallProgress` con 0 task e con
+  pesatura per task. Verificato: 25/25 verdi con Kotlin 2.0.21 + JUnit
+  4.13.2 (target JVM 17) in un harness JVM fuori dal repo che compila i
+  sorgenti reali di `domain/` e `data/Entities.kt` (annotazioni Room
+  sostituite da stub solo nell'harness); 4 mutazioni di `Planner`/`ratio()`
+  vengono tutte rilevate. Poi eseguiti con `./gradlew test` nella CI su
+  GitHub (run 41481823899 sul commit `1119250`: `testDebugUnitTest` e
+  `testReleaseUnitTest` verdi, insieme a `lint` e `assembleDebug`). Il terzo
+  punto (Room/Robolectric), facoltativo, non è stato fatto.
 
 - [ ] 🟠 **Fix status bar non confermato.** `enableEdgeToEdge()` in
   `MainActivity` seguiva il tema chiaro di sistema, rendendo le icone
@@ -81,9 +106,29 @@ La route `stats` non c'è ancora: arriva con la schermata in P2.
   form scorre per raggiungerlo con la tastiera aperta; se non scorre,
   va reso scrollabile fino in fondo o il bottone va reso sempre visibile.
 
+  Note (2026-11-02): causa trovata leggendo il codice — il bug è reale.
+  Con `enableEdgeToEdge()` la tastiera non ridimensiona più la finestra e
+  il manifest non dichiarava `adjustResize`: la `Column` scorrevole si
+  estendeva sotto la tastiera, quindi lo scroll si fermava con il bottone
+  ancora coperto. Fix applicato (scelta: form scorrevole fino in fondo,
+  niente barra fissa): `android:windowSoftInputMode="adjustResize"`
+  sull'activity + `.consumeWindowInsets(inner).imePadding()` sulla
+  `Column` di `AddProjectScreen`. Compila e passa `lint` nella CI su GitHub
+  (stesso run dei test); **non ancora provato a schermo**: nessun emulatore
+  nella sessione cloud (vedi nota ambiente in P0). Prima di spuntare: su
+  emulatore aprire la tastiera con l'anteprima del piano visibile e
+  verificare che si arrivi a "Crea progetto" scorrendo, senza spazio vuoto
+  doppio sopra la tastiera.
+
 - [ ] ⚪ **Cosmetico: card del progresso totale troppo stretta a 0
   progetti.** Nella Home, senza progetti la card dell'avanzamento
   totale non riempie la larghezza dello schermo.
+
+  Note (2026-11-02): la `Card` di `OverallCard` non aveva `fillMaxWidth()`
+  e si adattava al testo (che a 0 progetti è il più corto). Aggiunto
+  `Modifier.fillMaxWidth()`, come già in `ProjectCard`. Compila e passa
+  `lint` nella CI su GitHub; **non ancora verificato a schermo**: controllare
+  la Home vuota su emulatore prima di spuntare.
 
 - [ ] 🟠 **Planner: garantire sempre almeno 3 fasi.** Decisione presa da
   Arka il 2026-11-02 (vedi `PROJECTHUB_SPEC.md`, sezione Planner):

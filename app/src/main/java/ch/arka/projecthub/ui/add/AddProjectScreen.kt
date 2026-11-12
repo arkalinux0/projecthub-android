@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -71,6 +73,12 @@ fun AddProjectScreen(
         Column(
             Modifier
                 .padding(inner)
+                // Con edge-to-edge la tastiera non ridimensiona più la finestra: senza
+                // imePadding l'area scorrevole finisce sotto la tastiera e lo scroll si
+                // ferma con "Crea progetto" ancora coperto. consumeWindowInsets evita di
+                // contare due volte la barra di navigazione, già inclusa in `inner`.
+                .consumeWindowInsets(inner)
+                .imePadding()
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp),
