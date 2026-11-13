@@ -52,6 +52,22 @@ c'era `/dev/kvm`, quindi niente emulatore: le verifiche a schermo restano da
 fare in locale. La CI su GitHub (vedi "Fatto fuori backlog") non ha questi
 limiti: lì `./gradlew test`, `lint` e `assembleDebug` girano davvero.
 
+Aggiornamento (2026-11-12): esiste l'ambiente cloud `projecthub-android`,
+con `dl.google.com` consentito. Lì l'SDK si installa con `sdkmanager`
+(`platform-tools`, `platforms;android-35`, `build-tools;34.0.0`) e
+`./gradlew test lint assembleDebug` gira in locale con JDK 21. Anche
+l'emulatore parte, ma senza KVM solo in emulazione software
+(`emulator -accel off -no-window -gpu swiftshader_indirect`, immagine
+`system-images;android-34;default;x86_64`): boot in 10–12 minuti e ogni
+tocco costa 20–40 secondi. Per renderlo usabile: `-skin 720x1280` con
+`wm density 320`, animazioni a 0, Bluetooth disattivato
+(`pm disable-user com.android.bluetooth`, altrimenti va in crash a
+ripetizione), screenshot con `adb exec-out screencap -p` e tocchi a
+coordinate invece di `uiautomator dump`, che da solo manda l'app in ANR.
+I dialoghi "isn't responding" dipendono dalla lentezza, non dall'app: si
+chiudono con "Wait". Non impostare `hide_error_dialogs 1`: con quello il
+sistema chiude l'app al primo ANR.
+
 ## P1 — bug da correggere nel codice esistente
 
 - [x] ✅ ~~Incoerenza di timezone sulle date~~ — **falso allarme, verificato
@@ -93,14 +109,24 @@ limiti: lì `./gradlew test`, `lint` e `assembleDebug` girano davvero.
   `testReleaseUnitTest` verdi, insieme a `lint` e `assembleDebug`). Il terzo
   punto (Room/Robolectric), facoltativo, non è stato fatto.
 
-- [ ] 🟠 **Fix status bar non confermato.** `enableEdgeToEdge()` in
+- [x] 🟠 **Fix status bar non confermato.** `enableEdgeToEdge()` in
   `MainActivity` seguiva il tema chiaro di sistema, rendendo le icone
   della status bar scure su sfondo scuro; è stato applicato un fix ma
   lo screenshot dopo la modifica non mostra affatto la status bar, quindi
   non è verificato se ora è leggibile. Ricontrollare con uno screenshot
   che la includa, su emulatore o telefono reale.
 
-- [ ] 🟠 **Possibile bottone "Crea progetto" coperto dalla tastiera.**
+  Note (2026-11-12): confermato con screenshot su emulatore API 34 con il
+  sistema in tema chiaro (`cmd uimode night` → `Night mode: no`), APK di
+  `main` (`7087dd3`). In Home, Nuovo progetto e Dettaglio progetto orologio
+  e icone di stato sono bianchi sullo sfondo scuro dell'app, e bianchi sono
+  anche i pulsanti della barra di navigazione. Osservazione a margine, non
+  parte di questa voce: nelle liste (Home, Dettaglio) il contenuto scorre
+  sotto la status bar trasparente e per un attimo si sovrappone alle icone;
+  è il normale edge-to-edge senza barra superiore, da valutare se dà
+  fastidio.
+
+- [x] 🟠 **Possibile bottone "Crea progetto" coperto dalla tastiera.**
   Quando l'anteprima del piano generato è visibile in `AddProjectScreen`,
   la tastiera aperta può coprire il bottone finale. Non verificato se il
   form scorre per raggiungerlo con la tastiera aperta; se non scorre,
@@ -120,7 +146,16 @@ limiti: lì `./gradlew test`, `lint` e `assembleDebug` girano davvero.
   verificare che si arrivi a "Crea progetto" scorrendo, senza spazio vuoto
   doppio sopra la tastiera.
 
-- [ ] ⚪ **Cosmetico: card del progresso totale troppo stretta a 0
+  Note (2026-11-12): confermato con screenshot su emulatore API 34
+  (schermo 720×1280 a 320 dpi, APK di `main`). Scelta la data (anteprima
+  con 3 fasi), aperta la tastiera sul campo del nome e scritto "Prova":
+  il form resta tagliato a "Categoria", scorre con la tastiera aperta e in
+  fondo "Crea progetto" è interamente visibile sopra la tastiera, con sotto
+  solo lo spazio previsto dal layout (nessun margine doppio). Toccato da
+  lì, il bottone crea il progetto. Provato con l'anteprima più corta (3
+  fasi); con più fasi cambia solo quanto c'è da scorrere.
+
+- [x] ⚪ **Cosmetico: card del progresso totale troppo stretta a 0
   progetti.** Nella Home, senza progetti la card dell'avanzamento
   totale non riempie la larghezza dello schermo.
 
@@ -129,6 +164,10 @@ limiti: lì `./gradlew test`, `lint` e `assembleDebug` girano davvero.
   `Modifier.fillMaxWidth()`, come già in `ProjectCard`. Compila e passa
   `lint` nella CI su GitHub; **non ancora verificato a schermo**: controllare
   la Home vuota su emulatore prima di spuntare.
+
+  Note (2026-11-12): confermato con screenshot su emulatore API 34, a
+  1080×2340 e a 720×1280: con 0 progetti la card occupa tutta la larghezza,
+  con gli stessi margini delle altre.
 
 - [x] 🟠 **Planner: garantire sempre almeno 3 fasi.** Decisione presa da
   Arka il 2026-11-02 (vedi `PROJECTHUB_SPEC.md`, sezione Planner):
