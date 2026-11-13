@@ -208,26 +208,12 @@ sistema chiude l'app al primo ANR.
 
 ## Decisioni in sospeso
 
-- [ ] **Permessi aggiunti da WorkManager.** La spec dice "nessun permesso
-  oltre a `POST_NOTIFICATIONS`", ma la libreria scelta dalla stessa spec
-  per i promemoria porta nel manifest finale altri quattro permessi
-  normali (concessi all'installazione, senza richiesta all'utente):
-  `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` e
-  `ACCESS_NETWORK_STATE`. Verificato con `aapt2 dump permissions`
-  sull'APK: `INTERNET` **non** c'è, quindi l'app continua a non poter
-  aprire connessioni; `ACCESS_NETWORK_STATE` permette solo di sapere se
-  c'è rete. Per ora sono rimasti tutti, perché è la configurazione
-  supportata della libreria. Decisione richiesta ad Arka:
-  1. tenerli così e correggere la frase della spec;
-  2. togliere dal manifest quelli che l'app non usa
-     (`ACCESS_NETWORK_STATE`, `FOREGROUND_SERVICE`) con
-     `tools:node="remove"`: dovrebbe funzionare perché il worker non ha
-     vincoli di rete né lavori in primo piano, ma è una configurazione
-     non documentata da provare bene (`RECEIVE_BOOT_COMPLETED` e
-     `WAKE_LOCK` servono davvero: senza il primo il controllo non riparte
-     dopo un riavvio);
-  3. sostituire WorkManager con `AlarmManager`, che richiede solo
-     `RECEIVE_BOOT_COMPLETED` ma va gestito a mano.
+- [x] ✅ **Permessi aggiunti da WorkManager — deciso (2026-11-13).** Arka ha
+  scelto l'opzione 1: restano tutti e quattro, corretta la frase della
+  spec (vedi `PROJECTHUB_SPEC.md`, sezione Notifiche) da "nessun permesso
+  oltre `POST_NOTIFICATIONS`" a "nessuna chiamata di rete, mai
+  `INTERNET`" — quella è la garanzia che conta davvero e resta vera.
+  Non toccare il manifest per questo motivo.
 
 ## P2 — completare la v1 come da spec
 

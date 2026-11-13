@@ -104,11 +104,16 @@ Logica deterministica, nessuna IA:
 - Se un milestone è scaduto e non completo, notifica di allerta separata,
   su un canale a importanza alta; torna ogni giorno finché resta scaduto.
 - Una notifica per tipo con l'elenco delle fasi, non una per fase.
-- Nessun permesso oltre a `POST_NOTIFICATIONS` (Android 13+), chiesto a
-  runtime quando esiste almeno un progetto. **Da decidere:** WorkManager
-  aggiunge di suo `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`,
-  `FOREGROUND_SERVICE` e `ACCESS_NETWORK_STATE` (non `INTERNET`), vedi
-  "Decisioni in sospeso" in `TASKS.md`.
+- `POST_NOTIFICATIONS` (Android 13+) è il solo permesso dichiarato
+  dall'app, chiesto a runtime quando esiste almeno un progetto. Il
+  manifest finale ne contiene altri quattro portati da WorkManager
+  (`WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE`,
+  `ACCESS_NETWORK_STATE`) — concessi all'installazione, non richiesti
+  all'utente. Decisione di Arka (2026-11-13): restano, perché nessuno
+  apre connessioni (**mai `INTERNET`**, verificato con `aapt2 dump
+  permissions` sull'APK reale) e sostituirli costerebbe più di quanto
+  valga. La garanzia di spec è "nessuna chiamata di rete", non "nessun
+  permesso oltre `POST_NOTIFICATIONS`".
 
 ## Fuori scope per v1
 
