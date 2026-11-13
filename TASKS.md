@@ -208,7 +208,7 @@ sistema chiude l'app al primo ANR.
 
 ## P2 — completare la v1 come da spec
 
-- [ ] 🟡 **Streak e statistiche** (previsti in spec, non ancora in
+- [x] 🟡 **Streak e statistiche** (previsti in spec, non ancora in
   codice). Serve prima una modifica di schema: aggiungere a
   `TaskEntity` un campo `completedAtDay: Long?` (epoch day, null se non
   fatto) impostato quando `setTaskDone(id, true)`. Bump di `version` in
@@ -221,6 +221,38 @@ sistema chiude l'app al primo ANR.
     eventualmente un grafico a barre per categoria;
   - nuova route `stats` in `MainActivity`, voce di navigazione dalla
     Home (es. bottom bar o icona in alto).
+
+  Note (2026-11-12): fatto. Scelte tecniche:
+  - **Schema v2 con migrazione vera, non distruttiva.** `TaskEntity` ha
+    `completedAtDay: Long?`, `AppDatabase` è alla versione 2 con
+    `MIGRATION_1_2` (`ALTER TABLE tasks ADD COLUMN completedAtDay INTEGER`)
+    al posto di `fallbackToDestructiveMigration()`: costa tre righe e non
+    cancella i progetti già presenti sul dispositivo. I task spuntati prima
+    dell'aggiornamento restano spuntati ma senza data: contano nei totali
+    per categoria, non in serie/settimana/mese.
+  - `Repository.setTaskDone` registra il giorno quando si spunta e lo
+    azzera quando si toglie la spunta.
+  - `domain/Stats.kt`: `currentStreak()` e `statsOf()`. La serie conta i
+    giorni consecutivi fino a oggi; se oggi non c'è ancora nessun task
+    vale quella che arriva a ieri (si azzera dopo un giorno intero vuoto)
+    e la schermata avvisa che è a rischio. Settimana = da lunedì a oggi,
+    mese = dal primo a oggi. Le statistiche si calcolano dai task così
+    come sono ora: togliere una spunta toglie anche quel completamento.
+  - `ui/stats/StatsScreen.kt`: serie, settimana, mese e una barra di
+    avanzamento per categoria (task fatti/totali). Route `stats`, a cui si
+    arriva dal pulsante di testo "Statistiche" in alto nella Home
+    (`material-icons-core` non ha un'icona adatta e non valeva la pena
+    aggiungere `material-icons-extended` per una sola icona).
+
+  Verificato: `./gradlew test` (43 test, 17 nuovi in `StatsTest`), `lint`
+  (0 errori, nessun avviso nuovo) e `assembleDebug` in locale. Su
+  emulatore API 34: creato un progetto e spuntato un task con l'APK di
+  `main` (schema v1), installato sopra l'APK di questo branch → progetto e
+  spunta conservati, nessun crash; Statistiche mostrava serie 0 e
+  Software 1/9; spuntati altri due task → serie 1 giorno, "Oggi: 2 task
+  completati", settimana 2, mese 2, Software 3/9. Non verificato a
+  schermo: serie di più giorni e passaggio di mezzanotte (coperti solo dai
+  test di `StatsTest`).
 
 - [ ] 🟡 **Notifiche di scadenza** (previste in spec). Da aggiungere:
   - dipendenza `androidx.work:work-runtime-ktx` in `app/build.gradle.kts`;

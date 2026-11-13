@@ -23,7 +23,9 @@ Generate automaticamente alla creazione del progetto, non modificabili
 singolarmente in v1 (si può solo eliminare l'intero progetto).
 
 **Task**: id, milestoneId, projectId, titolo, fatto (bool), data di
-completamento (per streak e statistiche).
+completamento (`completedAtDay`, epoch day, null se non fatto; per streak e
+statistiche). Introdotta con lo schema v2 del database tramite migrazione
+non distruttiva: i task spuntati prima non hanno data.
 
 ## Categorie e modello di fasi
 
@@ -86,10 +88,14 @@ Logica deterministica, nessuna IA:
    - Anteprima live del piano generato (milestone + numero task) prima di
      confermare.
 
-4. **Statistiche** (nuova, da aggiungere)
-   - Streak: giorni consecutivi con almeno un task completato.
-   - Task completati questa settimana / questo mese.
-   - Eventualmente un grafico a barre per categoria.
+4. **Statistiche** (dalla Home, pulsante "Statistiche")
+   - Streak: giorni consecutivi con almeno un task completato. Se oggi non
+     è ancora stato completato nulla vale la serie che arriva fino a ieri:
+     si azzera solo dopo un giorno intero senza task.
+   - Task completati questa settimana (da lunedì) / questo mese (dal primo).
+   - Barre di avanzamento per categoria (task fatti / totali).
+   - Contano solo i task ancora spuntati: togliere la spunta toglie anche
+     il completamento dalle statistiche.
 
 ## Notifiche
 

@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +53,7 @@ fun HomeScreen(
     projects: List<ProjectUi>,
     onOpen: (Long) -> Unit,
     onAdd: () -> Unit,
+    onStats: () -> Unit,
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -72,7 +74,17 @@ fun HomeScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { Text("I miei progetti", fontSize = 26.sp, fontWeight = FontWeight.Bold) }
+            item {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "I miei progetti",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = onStats) { Text("Statistiche") }
+                }
+            }
             item { OverallCard(projects) }
 
             if (projects.isEmpty()) {

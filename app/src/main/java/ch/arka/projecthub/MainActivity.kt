@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -15,13 +16,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import ch.arka.projecthub.domain.statsOf
 import ch.arka.projecthub.ui.add.AddProjectScreen
 import ch.arka.projecthub.ui.home.HomeScreen
 import ch.arka.projecthub.ui.project.ProjectScreen
+import ch.arka.projecthub.ui.stats.StatsScreen
 import ch.arka.projecthub.ui.theme.ProjectHubTheme
 
 private const val ROUTE_HOME = "home"
 private const val ROUTE_ADD = "add"
+private const val ROUTE_STATS = "stats"
 private const val ARG_PROJECT_ID = "id"
 private const val ROUTE_PROJECT = "project/{$ARG_PROJECT_ID}"
 
@@ -53,6 +57,13 @@ private fun ProjectHubApp(vm: MainViewModel = viewModel()) {
                 projects = projects,
                 onOpen = { id -> nav.navigate(projectRoute(id)) },
                 onAdd = { nav.navigate(ROUTE_ADD) },
+                onStats = { nav.navigate(ROUTE_STATS) },
+            )
+        }
+        composable(ROUTE_STATS) {
+            StatsScreen(
+                stats = remember(projects) { statsOf(projects) },
+                onBack = { nav.popBackStack() },
             )
         }
         composable(
