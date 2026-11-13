@@ -1,14 +1,23 @@
 package ch.arka.projecthub
 
+import android.Manifest
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -17,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import ch.arka.projecthub.domain.statsOf
+import ch.arka.projecthub.notify.DeadlineNotifications
 import ch.arka.projecthub.ui.add.AddProjectScreen
 import ch.arka.projecthub.ui.home.HomeScreen
 import ch.arka.projecthub.ui.project.ProjectScreen
@@ -50,6 +60,8 @@ class MainActivity : ComponentActivity() {
 private fun ProjectHubApp(vm: MainViewModel = viewModel()) {
     val nav = rememberNavController()
     val projects by vm.projects.collectAsStateWithLifecycle()
+
+    NotificationPermissionRequest(hasProjects = projects.isNotEmpty())
 
     NavHost(navController = nav, startDestination = ROUTE_HOME) {
         composable(ROUTE_HOME) {
@@ -93,6 +105,26 @@ private fun ProjectHubApp(vm: MainViewModel = viewModel()) {
                     }
                 },
             )
+        }
+    }
+}
+
+/**
+ * Su Android 13+ le notifiche vanno autorizzate a runtime. Lo si chiede quando esiste
+ * almeno un progetto (prima non ci sarebbe nulla da notificare) e una sola volta per
+ * avvio: dopo due rifiuti è il sistema a non mostrare più la richiesta.
+ */
+@Composable
+private fun NotificationPermissionRequest(hasProjects: Boolean) {
+    val context = LocalContext.current
+    var asked by rememberSaveable { mutableStateOf(false) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    LaunchedEffect(hasProjects) {
+        if (hasProjects && !asked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !DeadlineNotifications.canNotify(context)
+        ) {
+            asked = true
+            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 }
